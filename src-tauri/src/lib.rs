@@ -1053,6 +1053,19 @@ pub fn run() {
 
                 initialize_common_config_snippets(&state);
 
+                // 根据用户最后一次操作的路由总开关状态恢复本地路由服务。
+                // 这里只启动服务；各应用的接管状态仍由下方的现有逻辑独立恢复。
+                if crate::settings::get_settings().local_proxy_enabled {
+                    match state.proxy_service.start().await {
+                        Ok(info) => log::info!(
+                            "✓ 已恢复本地路由总开关: {}:{}",
+                            info.address,
+                            info.port
+                        ),
+                        Err(e) => log::error!("✗ 恢复本地路由总开关失败: {e}"),
+                    }
+                }
+
                 // 检查 settings 表中的代理状态，自动恢复代理服务
                 restore_proxy_state_on_startup(&state).await;
 
