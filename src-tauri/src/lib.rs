@@ -1741,6 +1741,22 @@ pub(crate) fn remove_tray_icon_before_exit(app_handle: &tauri::AppHandle) {
 /// 检查 `proxy_config.enabled` 字段，如果有任一应用的状态为 `true`，
 /// 则自动启动代理服务并接管对应应用的 Live 配置。
 async fn restore_proxy_state_on_startup(state: &store::AppState) {
+    // 根据保存的本地代理总开关状态自动恢复代理服务
+    if crate::settings::get_settings().local_proxy_enabled {
+        match state.proxy_service.start().await {
+            Ok(info) => {
+                log::info!(
+                    "✓ 已恢复本地代理总开关: {}:{}",
+                    info.address,
+                    info.port
+                );
+            }
+            Err(e) => {
+                log::error!("✗ 恢复本地代理总开关失败: {e}");
+            }
+        }
+    }
+
     // 收集需要恢复接管的应用列表（从 proxy_config.enabled 读取）
     let mut apps_to_restore = Vec::new();
     for app_type in ["claude", "codex", "gemini"] {
