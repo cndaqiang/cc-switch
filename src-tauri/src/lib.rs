@@ -1053,7 +1053,14 @@ pub fn run() {
 
                 initialize_common_config_snippets(&state);
 
-                // 检查 settings 表中的代理状态，自动恢复代理服务
+                // CC Switch 启动时默认开启本地路由总开关。
+                // 这里只启动路由服务，不改变各应用原有的接管开关状态。
+                match state.proxy_service.start().await {
+                    Ok(_) => log::info!("✓ 本地路由总开关已默认启动"),
+                    Err(e) => log::error!("✗ 本地路由默认启动失败: {e}"),
+                }
+
+                // 按原有状态恢复各应用的路由接管
                 restore_proxy_state_on_startup(&state).await;
 
                 // Periodic backup check (on startup)
