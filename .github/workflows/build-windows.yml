@@ -1,0 +1,45 @@
+name: Validate Windows Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - test/remember-local-routing-windows
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: windows-2022
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10.12.3
+          run_install: false
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build unsigned Windows app
+        run: >
+          pnpm tauri build
+          --config '{"bundle":{"createUpdaterArtifacts":false}}'
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: cc-switch-windows
+          path: |
+            src-tauri/target/release/cc-switch.exe
+            src-tauri/target/release/bundle/msi/*.msi
+            src-tauri/target/release/bundle/nsis/*.exe
